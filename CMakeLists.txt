@@ -1,10 +1,17 @@
+<<<<<<< Updated upstream
 cmake_minimum_required(VERSION 3.28)
+=======
+cmake_minimum_required(VERSION 3.8)
+
+include (ExternalProject)
+>>>>>>> Stashed changes
 
 include(FetchContent)
 
 project(ngsolve_special_functions)
 include(ngsolve_addon.cmake)
 
+<<<<<<< Updated upstream
 # Fetch f2c utility and library
 FetchContent_Declare(
   f2c
@@ -61,6 +68,45 @@ add_custom_target(convert_sources ALL
   COMMAND ${F2C_COMMAND} -a ${SLATEC_SOURCES_FORTRAN} WORKING_DIRECTORY ${BIN_DIR}/slatec/src
   BYPRODUCTS ${SLATEC_SOURCES_C}
   USES_TERMINAL
+=======
+find_package(NGSolve CONFIG REQUIRED
+  HINTS /usr $ENV{NETGENDIR}/.. /opt/netgen/ /Applications/Netgen.app/Contents/Resources/CMake C:/netgen
+)
+
+# check if CMAKE_INSTALL_PREFIX is set by user, if not install in NGSolve python dir
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${NGSOLVE_INSTALL_DIR}/${NGSOLVE_INSTALL_DIR_PYTHON} CACHE PATH "Install dir" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+
+
+################################
+# Build f2c utility and library
+ExternalProject_Add(
+  project_f2c
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/f2c
+  GIT_REPOSITORY https://github.com/mhochsteger/f2c.git
+  GIT_TAG 747683f
+  PATCH_COMMAND sed -i '' "1s/^/cmake_minimum_required(VERSION 3.5)\\n/" <SOURCE_DIR>/CMakeLists.txt
+    COMMAND sed -i '' "/cmake_minimum_required(VERSION 3\\.1)/d" <SOURCE_DIR>/CMakeLists.txt
+  CMAKE_ARGS
+  -DCMAKE_INSTALL_PREFIX=${NGSOLVE_INSTALL_DIR}
+  -DF2C_INSTALL_DIR_BIN=${NETGEN_INSTALL_DIR_BIN}
+  -DF2C_INSTALL_DIR_LIB=${NETGEN_INSTALL_DIR_LIB}
+  -DF2C_INSTALL_DIR_INCLUDE=${NETGEN_INSTALL_DIR_INCLUDE}
+  -DCMAKE_C_FLAGS="-Wno-implicit-function-declaration"
+)
+
+ExternalProject_Add(
+  project_fetch_slatec
+      DEPENDS project_f2c
+      DOWNLOAD_COMMAND ""
+      CONFIGURE_COMMAND ${CMAKE_COMMAND}
+        -DBIN_DIR=${CMAKE_CURRENT_BINARY_DIR}/specialcf
+        -DNGSOLVE_BINARY_DIR=${NGSOLVE_BINARY_DIR}
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/src/fetch_and_convert_slatec.cmake
+      BUILD_COMMAND ""
+      INSTALL_COMMAND ""
+>>>>>>> Stashed changes
 )
 
 add_ngsolve_addon(ngsolve_special_functions src/specialcf.cpp ${SLATEC_SOURCES_C}  ${CMAKE_CURRENT_BINARY_DIR}/specialcf/Faddeeva/Faddeeva.cc)
